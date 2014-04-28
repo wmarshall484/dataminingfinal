@@ -20,15 +20,14 @@
 \usepackage{url}
 
 \title{\LARGE \bf
-Perception and Motion Planning for Pick-and-Place of Dynamic Objects
+Analysis of Current Data Mining Techniques on SMS Spam Filtering
+%I Got Them Research Paper Writing Blues...
+%Intoxicated Cells: a Prospective Study of the Effects of Tequila on Pluripotent Stem Cells
 }
 
-\author{Anthony Cowley$^1$, Benjamin Cohen$^1$, William Marshall$^2$, Camillo J. Taylor $^1$ and Maxim Likhachev$^3$%
+\author{William Marshall$^1$%
 %\thanks{*This work was supported by SUNFEST}% <-this % stops a space
-\thanks{$^{1}$GRASP Laboratory, University of Pennsylvania, USA
-        {\tt\small \{acowley,bcohen,cjtaylor\}@seas.upenn.edu}}
 \thanks{$^2$Lehigh University, USA {\tt\small wcm214@lehigh.edu}}
-\thanks{$^3$Robotics Institute, Carnegie Mellon University, USA {\tt\small maxim@cs.cmu.edu}}
 }
 
 \begin{document}
@@ -39,63 +38,43 @@ Perception and Motion Planning for Pick-and-Place of Dynamic Objects
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
-  Mobile manipulators have brought a new level of flexibility to
-  traditional automation tasks such as tabletop manipulation, but are
-  not yet capable of the same speed and reliability as industrial
-  automation. We present approaches to 3D perception and manipulator
-  motion planning that enable a general purpose robotic platform to
-  recognize and manipulate a variety of objects at a rate of one
-  pick-and-place operation every \unit[6.7]{s}, and work with a
-  conveyor belt carrying objects at a speed of
-  \unitfrac[33]{cm\,}{\,s}.
+The necessity of a fast, accurate, easily trainable spam detection
+system is reflected in the current proliferation of SMS spam
+messages. By taking advantage of the suite of machine learning
+algorithms integrated into WEKA, we provide an analysis of SMS spam
+detection accuracy across severak different learning models, and
+present the Naive Bayes algorithm as a primary choice.
 \end{abstract}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
-Robotics researchers regularly endow robot platforms with new
-capabilities that increase the breadth of potential applications and
-push the boundaries of autonomy. In contrast, industrial automation is
-driven by a pragmatism dictated by the need to optimize throughput and
-reliability. The hope of both is that, as multi-purpose robotic
-platforms become more capable, they will be able to take over an
-increasing fraction of the tasks currently handled by application
-specific, fixed installation automation, thereby granting all
-applications greater levels of modularity and adaptability.
+Short Message Service (SMS) messages are one of the primary means of
+communication. Between the years of 2007 and 2010, the number of sent
+SMS messages tripled, and the global rate of message sending increased
+to 200,000 texts per second [1]. Along with the increased usage of SMS
+messages, the proportion of SMS spam messages has also not only risen
+to match the new levels of traffic, but has accelerated to the point
+where parts of Asia classified 30\% of all SMS messages as spam in
+2012 [2]. Although SMS spam is not as prevelant as email spam -- which
+constituted 70.7\% of all emails in Q2 2013 -- there is still a strong
+motivation for cellular companies to employ effective spam detection
+systems, since it's likely that customers are willing to pay more for
+a service that is insulated from spam.
 
-We are now seeing an acceleration of the rate at which research
-robotics feeds into engineering practice. This crossover is arguably
-being led today by Rethink Robotics's Baxter platform: a movable
-manipulation platform with many of the characteristics of general
-purpose research platforms, but sold to industry customers. On
-the research side, general purpose robotics has taken a large step
-forward over the past few years, driven in no small part by the
-development of Willow Garage's ROS software ecosystem, Willow Garage's
-PR2 mobile manipulation platform, and Microsoft's Kinect sensor that
-has made RGB-D perception ubiquitous in robot perception.
+Many modern approaches to spam detection are founded upon the research
+that stems from the identification of email spam. Email spam detection
+benefits from features such as a subject header, initial greetings,
+and the IP address of the sender. Such features are not applicable to
+SMS messages which have an upper limit of 160 characters, providing
+overall less information to perform classification. Additionally,
+since SMS spam is less pervasive than email spam, its classification
+is made more difficult due to the lower prior probability. Blanzieri
+at al. were able to achieve an email spam misclassification rate of
+only 1.17\% [3], which is a daunting task for SMS spam detection.
 
-% While research slowly feeds into engineering practice, there is a
-% tendency to allow a significant gap in performance and reliability
-% between research demonstrations and industrial applications. A
-% research platform demonstration often consists of a single capability
-% demonstrated a small number of times with little consideration given
-% to efficiency, while practical applications require that a system be
-% responsive and reliable. To this end, general purpose robotics has
-% taken a large step forward over the past few years, driven in no small
-% part by the development of Willow Garage's ROS software ecosystem,
-% Willow Garage's PR2 mobile manipulation platform, and Microsoft's
-% Kinect sensor that has made RGB-D perception nearly ubiquitous in
-% robot perception.
-
-We apply these technologies to the problem of tabletop manipulation at
-performance levels relevant to industrial use. Performing this task
-involves 3D object recognition, pose estimation, and the planning of
-collision-free manipulator trajectories to first grasp an object, then
-move it to its destination. We present a high performance, high
-precision perception and planning combination that enables the PR2 to
-perform pick-and-place operations on dynamic objects by working with a
-conveyor belt that drives objects past the robot at a speed of
-\unitfrac[33]{cm\,}{\,s}.
+The differences between SMS and email spam detection warrant a
+reevaluation of the effectiveness of current learning models. Fortunately, the University of Waikato has provided WEKA: a toolkit that conveniently provides implementations of many well known and vetted classification, association, and clustering techniques. The algorithms included in WEKA and tested in this paper are by no means an exhaustive analysis of the spam detetion literature, yet this paper should function well as an introduction for those who are new to machine learning, WEKA, and spam detection.
 
 \section{Related Work}
 Factory automation typically relies on careful environment control and
