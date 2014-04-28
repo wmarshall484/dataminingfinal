@@ -18,6 +18,7 @@
 \usepackage{subfigure}
 \usepackage[]{units}
 \usepackage{url}
+\usepackage{mathtools}
 
 \title{\LARGE \bf
 Analysis of Current Data Mining Techniques on SMS Spam Filtering
@@ -89,9 +90,17 @@ repository,which contains 5574 text messages, 425 ofwhich were spam,
 the rest of which are non-spam. This dataset was chosen because its
 spam to non-spam ratio of 7.6\% is approximates the 10.5\% SMS spam
 rate found in nature[6]. The data was collected from a website
-called Grumbletext,where users post the text of spam messages that
+called grumbletext.com,where users post the text of spam messages that
 they have recieved, and was manually inspected and classified.
 
+It should be noted that there is an inherent bias in the dataset,
+since the messages were collected from cellular users in the United
+Kingdom. As a result of this, certain features that are a strong
+indicator of spam (such as the presence of the ``£'' character) are
+not as applicable to messages recieved in the United States. Such
+geographic, culture, and language-based biases are unavoidable, and
+actual implementations of the following learning models would do well
+to train on messages from the intended location.
 
 \section{Preprocessing}
 \begin{figure}[t]
@@ -128,33 +137,47 @@ characters that might cause confusion within a unique feature, so any
 character within the following
 string \begin{verbatim}!@#\%^&*()<>.,\end{verbatim} was replaced with
 a space (subequently, all spurious spaces are removed). After this
-preprocessing stage, only 8,243 unique strings remained.
+preprocessing stage, only 12,734 unique strings remained.
 
 Many of the words that remained were ones such as ``the'' or ``a''
 that were ubiquitous across both spam and non-spam messages. Rather
 than have high frequency yet low information features, the strings
 that were used more that 500 or less than 5 times were simply deleted
 from the feature space. In addition, the top 50 most frequent words
-were alse deleted, finally resulting in 2,591 unique strings. 
+were alse deleted, finally resulting in 8,185 unique strings. 
 
 \subsection{Chi-squared selection}
 
 Unfortunately, having several thousands of attributes is prohibitively
 expensive for learning techniques that don't scale well with
 dimensionality. Our attempts to run the J48 decision-tree learning on
-insatances 2,591 attributes took several days, and eventually resulted
+insatances 8,185 attributes took several days, and eventually resulted
 in an overflow of the JVM's heap space. Therefore, it was necessary to
 further reduce the dimensionality to even begin to obtain data.
 
-The chi-squared independence test provided 
+The chi-squared independence test is an indicator for how well
+observed data corresponds to a statistical model. The idiomatic
+example is to determine, at a certain level of confidence, whether a
+coin toss is baised based on 100 flips, where 66 tosses are heads and
+33 are tails. Chi-squared is calculated as follows:
 
-As the messages were iterated over, their relative
-spam and non-spam frequencies were recoreded.
+\[\sum_{i=1}^{N}=\frac{(e_i-a_i)^2}{e_i}\]
 
+Where $e_i$ represents an expected value, $a_i$ represents the
+observed (actual) value, and $N$ is the total number of expected
+values. In the case of the coin example, there are only two expected
+values: the number of heads and the number of tails, each of which has
+an expected value of 50 if the coin is fair. Therefore, the
+chi-squared value for 66 heads and 33 tails is 10.9, which is greater
+than the value of 7.88 for a 95\% confidence interval, indicating that
+the coin is biased.
 
-
-
-
+This directly applies to the problem of feature selection, where the
+primary goal is to find features that are not indepenent to the set of
+classes; e.g., the selection of features whose presence or absence is
+an indicator for its class. To this end, we calculate the chi-squared
+metric for each of the 8,185 remaining features, and retained the
+ones that demonstrate class dependence, resulting in 1,835 attributes.
 
 \subsection{Coarse Recognition and Localization}
 
