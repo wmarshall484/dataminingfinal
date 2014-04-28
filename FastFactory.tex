@@ -231,167 +231,171 @@ optimal.
   to right: the actual class of the instance, the number of instances
   classified as spam, and the number of instances classified as
   non-spam.  }
+\label{fig-3}
 \end{figure}
 
 
-\section{K Nearest Neighbor}
+\subsection{K Nearest Neighbor}
+EM's high accuracy, yet unfeasable runtime demonstrated the need for a
+classification method that run faster, even at the expense of
+accuracy. The K Nearest Neighbor method (KNN) provides such a
+compromise; it is one of the most widely used machine learning methods
+due to its reasonably high dimensional-scalability and accuracy. One
+of the most appealing aspects of KNN is that it has been proved that
+its accuracy converges to no worse than twice the Bayes error rate if
+given a sufficient number of instances. This is seen in the following
+equation:
 
+\[
+P^* \leq P \leq P^*(2-\frac{c}{c-1}P^*) 
+\]
+
+where $P^*$ is the Bayes error, $P$ is the error associated with KNN,
+and $c$ is the number of classes.
+
+For each instance, KNN operates by iterating over each instance in the
+training set, and keeping track of the N closest instances and their
+classes. The test instance is classified according to the class that
+has the highest proportion among the N closest points. Like EM
+clustering, the runtime of KNN scales linearly with the dimensionality
+of the dataset, since its complexity is $O(n*m*d)$. Moreover, KNN
+classification requires no preprocessing of the data (in the absence
+of a kd-tree) thus taking no time to build a KNN model. While not
+requiring time to build a model might seem like a benefit because it
+saves time, it is far less space efficient than other methods; in
+order to classify future instances, EM clustering only need to store a
+few parameters for its hyperellipsoids while KNN must retain the
+entire set of training instances. For SMS spam detection software that
+might need to run on a cellular phone, a gigabyte-sized training set
+might prove too large.
+
+For values of K that ranged from 1-5, K nearest neighbor had an
+accuracy of 92.05\%, taking an average time of 91 seconds. Compared to
+the runtime of EM clustering, KNN presents itself as a viable
+alternative. An interesting trend occurs when oberving the accuracies
+given different values of K; as the value of K increases, the accuracy
+of KNN classification decreases. Usually, higher values of K
+corresponds with higher accuracy values because it causes KNN to be
+more tightly bound to the Bayes error. A possible explanation is that
+there is insufficient data to completely map the feature space,
+resulting in a bias towards the class that has the larger prior
+probability. Given more data, it's likely that larger values of K
+would instead positively affect KNN's accuracy.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/covered_basket-grasps-kinematics_check.png}
+\includegraphics[width=\columnwidth]{figures/KNN.png}
 \caption{
-The end-effectors in green are included in $X_{pg}$, while the ones shown in red are discarded by the kinematic feasibility check.
+The accuracy of the KNN algorithm on the SMS dataset for varying values of K. A distinct downwards trend is noticed as the value of K increases.
 }
-\label{fig:kinematics_feasibility_check}
+\label{fig:fig4}
 \end{figure}
 
-Given a set of valid grasps, a heuristic is typically used to select
-the best grasp to plan for~\cite{WGGrasping}. However, this approach
-can be overly restrictive, as the feasibility of the grasp depends on
-the estimated time of arrival of the object. The better option is to
-let the planner itself figure out which grasp to plan to given the
-time constraint.
-%a common approach to choosing which one to plan to, is to rank them using heuristics such as the number of sensed object points that fit inside the gripper or the distance from the object center~\cite{WGGrasping}. These heuristics are used because the grasp is planned on the fly and its quality is unknown. Given that our grasps were recorded previously, we are confident in their reliability and how to choose between them is unclear. 
 
-% Thus, instead of choosing a single pregrasp-grasp tuple to target, the
-% entire set of pregrasps in $X_{pg}$ is sent to the motion planner,
-% allowing the planner to determine the $\{x_{p_j}, x_{g_j}\}$ in
-% $X_{pg}$ that is feasible and optimizes costs well. After a plan is
-% computed by the planner, the final waypoint of the planned path to the
-% pregrasp, $x_{p_j}$, chosen by the planner. We use the corresponding
-% grasp, $x_{g_j}$ as the grasp pose.
+\subsection{J48}
 
-Thus, instead of choosing a single pregrasp-grasp tuple to target, the
-entire set of pregrasps in $X_{pg}$ is sent to the motion
-planner. When the planner finds a collision-free trajectory to an
-element of $X_{pg}$, we select the corresponding grasp, $x_{g_j}$ as
-the grasp pose. Computing the postgrasp is a straightforward process,
-generic across object types. Given the grasp, $x_{g_j}$, we compute
-the postgrasp, $x_{po_j}$, by searching through the set of postgrasps
-for a kinematically feasible arm configuration that is as far from the
-table as possible. In our experiments, we found that the $x_{po_j}$
-chosen was typically within 12cm of $x_{g_j}$.
+J48 decision trees, another staple of machine learning techniques,
+were also tested. The J48 algorithm is a modification of the ID3
+agorithm that operates on the principle of iteratively removing
+informational entropy from the dataset by splitting instances into
+groups based on the values of a nominal attribute at each
+iteration. Informational entropy is an indicator of the degree to
+which a dataset is divided amongst its classes, and can be calculated
+using the following formula:
 
-\subsection{Motion Planning}
+\[
+\sum_{i=1}^{C} p_i\log{p_i}
+\]
 
-% In an environment where robots work alongside people, it is important
-% that the robot's behavior is consistent and predictable. This way, any
-% human workers nearby can feel comfortable and safe around it. In
-% particular, for a robot to be an effective member of a team on an
-% assembly line that sorts moving objects into bins, the robot motions
-% needs to be consistent, predictable and as close to optimal as
-% possible in order for people to be able to work alongside and within
-% the workspace of the robot. With this in mind, we implemented a
-% heuristic search-based approach to generate motion plans for each of
-% the robot's arms independently.
+where $C$ represents the number of classes, and $p$ represents the the
+proportion of class $i$ in the dataset. For example: a dataset where
+90\% of its instances a class $A$, and only 10\% of its instances are
+in a class $B$ would have lower informational entropy than a dataset
+that has 50\% of its instances in $A$ and $B$, respectively.
 
-Heuristic searches such as A* provide strong theoretical guarantees
-such as completeness and optimality or bounds on
-suboptimality~\cite{Pearl-heur}. Their generality allows for complex
-constraints and cost functions, while providing good cost minimization
-and consistency in the solution. Consistency here implies that given
-similar input, similar output is produced, thus making the robot's
-motions more predictable.
+J48 begins by calculating the initial entropy of the dataset, the
+average entropy of the resulting datasets after splitting on an
+attribute, and the difference between the two termed the ``information
+gain''. Whichever attribute yields the largest information gain is
+chosen to be the root of the decision tree. The process is then
+repeated recursively for each subdivided dataset until a complete tree
+is created.
 
-Motion planning for pick-and-place of moving objects needs to be
-performed as fast as possible so the robot has enough time to execute
-the computed motions in time. To combat the high dimensionality of the
-planning problem, we employ a heuristic search based approach that
-uses an anytime variant of A* called ARA*~\cite{LikGorThr-ara} that
-quickly finds an initial, and possibly sub-optimal, solution and
-repairs it while deliberation time allows. The approach also relies on
-a compact graph representation and informative heuristics to provide
-real time performance. Details on this approach and applications to single and dual-arm motion planning can be found in~\cite{Cohen2, Cohen3}. 
+Because J48 recirsively tests each subdivided dataset on each
+remaining attribute, its computational complexity is no less than
+$O(d^2)$. Despite the squared dimensional complexity of J48, its
+runtime on the SMS dataset was less than the EM clustering algorithm,
+terminating in about half an hour, however its accuracy was also lower
+than the EM clustering's with 96.9\% accuracy.
 
-We configured the planner to search in a 7 dimensional task space, $\{{x, y, z, roll, pitch, yaw, \theta}\}$, that represents the 6-DOF pose of the end-effector in the world frame, coupled with $\theta$, the position of the redundant degree of freedom in the robot's arm. This representation can be used when planning for a robot with one or more 7-DOF manipulators, such as the PR2 robot. In our experiments, we execute two independent instances of the planner, one for each arm. The cost function we use is aimed to minimize the 6-DOF path length of the end-effector.
+An advantage to using J48 is that the decision tree that it generates
+is mostly human-readable. For the idiomatic applications such as
+doctors deciding whether to give a patient contact lenses, this is
+highly beneficial. For the purposes of SMS spam detection, we are
+given insight into the strings and tokens which are the best
+indicators of whether a message is or isn't spam. According to the
+output of J48, the string that removes the most entropy from the spam
+dataset is the string ``claim'', followed by ``www'' and
+``prize''. Intuitively it should make sense, since many spam messages
+have the format ``Claim your prize at www.spamsite.com!'', yet it is
+reassuring to have this appear in our findings. Unfortunately, the J48
+model that resulted from the SMS dataset was rather large, having a
+size of 139 with 70 leaf-nodes, and is arguably too complex to be
+human readable. Even so, while such a large tree might be
+inappropriate for human-readibility, the model is orders of magnitude
+smaller than the KNN model.
 
-During the pick action, the planner is called to plan a path from the \textit{waiting} configuration of the arm to one of the pregrasps in $X_{pg}$. Before planning begins, the geometry of the fixed objects in the robot's workspace are added to the collision representation. In our experiments, this included the conveyor belt and bins that surrounded the robot. After the robot grasps the object, the collision geometry of the object is attached to the robot's collision model. During the place action, a plan is requested from the postgrasp to any one of the drop poses above the bins. Note that there is nothing constraining the user from having the robot gently place the item on a surface instead. Now that a potentially fragile object (or an object filled with something) is grasped in the robot's end-effector, we impose an upright path constraint on the planner when computing a path for the place action. The constraint requires the planner to maintain the initial $\{roll, pitch, yaw\}$ of the end-effector throughout the path with a small tolerance in each dimension.
+\subsection{Naive Bayes}
+Of all the learning models that were tested, Naive Bayes proved to be
+the most effective method for SMS spam detection. Naive Operates on
+Bayes' theorem of conditional probablility which is expressed in its
+asymmetric form as follows:
+
+\[
+P(A|B) = \frac{P(B|A)P(A)}{P(B)}
+\]
+
+In other words, given two events $A$ and $B$, the probability that
+both $A$ and $B$ occur simultaneously is equal to the prior
+probability of one times the conditional probability of the
+other. Bayes' theorem applies directly to the problem of SMS spam
+detection because we can use it to calculate $P(spam| \mathbf{x})$;
+e.g., the probability that a particular message is spam given the
+words that were used in the feature vector $\mathbf{x}$.
+
+Using WEKA's Naive Bayes classification method resulted in a
+classification accuracy of 98.277\%, the most accurate of all the
+faster-running algorithms. Unlike the previous techniques explored in
+this paper, the accuracy Naive Bayes did not come at the cost of slow
+runtime, performing its classifications in only 0.82 seconds per fold
+of cross-validation. Additionally, the model that it uses for
+classification consists only of the prior and posterior probabilities
+of each class and attribute value, respectively, since the
+classification computation is only a simple multiplication of these
+values. As such, Naive Bayes scales linearly with the dimension of the
+dataset, implying decent runtime performance even when the number of
+unique words increases by orders of magnitude.
+
+It's likely that Naive Bayes' high accuracy rate stems partially from
+the chi-squared selection generated features that were optimal. Naive
+Bayes performs well when the class features are not independent of
+their class; that is, when the conditional probabilities of each class
+attribute deviate from a value of $\frac{1}{c}$. The chi-squared metric
+selects such features.
+
+\section{Conclusion and future work}
+
+Although Naive Bayes performed better than any of the other methods tested, it still
  
-After a path is computed, we pass it through a simple deterministic shortcutting routine that can deal effectively with discretization artifacts. We found that only a single pass through the points was necessary. In our experiments, the entire shortcutting step lasted between 5-10ms, including checking the interpolated motions for collisions every $2^{\circ}$.
 
-The ability to accurately predict the time it takes to execute a
-trajectory is essential to picking up a quickly moving object. Being
-that our motion planner plans solely for the kinematics of the arm, we
-then perform a final post-processing step, in which the shortest
-timing intervals between points are computed that enforce the robot's
-dynamic constraints~\cite{IterativeSmoother}. The waypoint locations
-themselves are not moved, instead feasible velocities and
-accelerations are assigned. We found in our experiments that on
-average, for a trajectory from an arm's initial configuration to a
-pregrasp pose, the predicted execution timing and the actual
-trajectory execution timing differ by approximately \unit[80]{ms}. The
-pregrasp-to-grasp trajectory is much shorter, which provides for a
-much smaller temporal prediction error, thus making the pregrasp pose
-a useful waypoint at which to make final timing adjustments to achieve
-a precise collision.
-
-\subsection{Execution}
-
-Given that the object is moving at a reasonable pace, the pick action
-is substantially more difficult to execute than the place because very
-precise timing is needed to succesfully pick up the object with a firm
-grasp. For example, in our experiments the objects moved at
-approximately \unitfrac[33]{cm\,}{\,s} across the robot's
-workspace. At that velocity, if the execution of our grasp motion is
-\unit[100]{ms} too late, the object will have passed $x_{pred}$ by
-more than \unit[3]{cm}, and, depending on the type of the object, it
-is very likely that the end-effector will swipe and miss.
-
-\textit{\textbf{Pick Action.}} 
-At this stage in the pipeline, it is confirmed that the entire pick action is kinematically feasible. In the case of the pick action, the following two trajectories have been generated:
-
-\begin{itemize}
-\item $traj_{p}$ - The pregrasp trajectory begins at the waiting configuration of the arm and ends at $x_{p_{j}}$. It is a collision free path generated by the motion planner, then shortcutted and filtered. $traj_{p}$ has a predicted trajectory execution duration of $d_{p_{pred}}$ seconds.
-\item $traj_{g}$ - The grasp trajectory begins with the wrist at $x_{p_{j}}$, then moves to $x_{g_{j}}$ and ends at $x_{po_{j}}$. The path is an open loop motion in which the end-effector moves a very short total distance. $traj_{g}$ is filtered to assure the robot can execute it. Note that we define $d_{g_{pred}}$ as the predicted trajectory execution duration of the trajectory from the start until $x_{g_{j}}$. We disregard the execution time from $x_{g_{j}}$ to $x_{po_{j}}$ because the first half of the motion is the only time sensitive component, given that the end-effector has to be at $x_{g_i}$ to pick up the object at $x_{pred}$ at time $t_{pred}$.
-\end{itemize}
-
-The next step is to determine whether there is enough time for the
-robot to execute both trajectories in time to pick up the object at
-$t_{pred}$. The pickup is determined to be feasible if $t_{pred} >
-(t_{now} + d_{p_{pred}} + d_{g_{pred}})$. If the pickup is feasible,
-then $traj_{p}$ is executed immediatly. After it is completed,
-$traj_{g}$ will begin execution at $t_{g_{execute}} = t_{pred} -
-d_{g_{pred}}$. The end-effector is commanded to start closing as it is
-approaching the grasp pose. In our experiments, we found that
-depending on how early the object was detected and which arm is being
-used, the robot would sleep for between 0.0 and 1.5 seconds between
-executing the trajectories to ensure a well-timed grasp.
-
-
-\textit{\textbf{Place Action.}}
-After the object is grasped and raised to the postgrasp, there is not much work left to do. The computed path with the upright orientation constraint on the end-effector is executed immediatly. After the end-effector opens, allowing the object to drop into the desired bin, the arm returns to the waiting configuration. The purpose of the waiting configuration is two fold. First, it is intended to keep the arm that is closer to the feed edge of the belt out of the view of the RGB-D sensor, regardless of where the bins are located. Second, it is desirable to keep the arm in a configuration that is close to the table to aid in quicker reaction times by having to execute shorter trajectories.
-
-
-
-
-\section{Experiments}
-
-% We should have a \subsection{PR2 Robot} discussing the PR2. We should try to keep the paper as robot agnostic as possible and here we should have an introduction to our chosen mobile manipulation platform, the pr2.
-
-\subsection{Computing Platforms}
-All logic related to planning was executed onboard the PR2's own
-computers. The perception software was hosted remotely on a desktop
-computer with an Intel Core i7-2600 quad-core CPU at 3.4GHz and an
-NVIDIA GeForce GT 420 GPU with 48 CUDA cores, a low-end graphics card
-from 2010. The imposition of networking between these two critical
-components adds a significant and variable amount of latency to the
-system, however the PR2 used for these experiments did not have a
-discrete GPU, and so could not host the perception system itself. The
-perception pipeline was written in the Haskell functional programming
-language, and compiled with the
-GHC\footnote{\url{http://www.haskell.org/ghc}} 7.6.1 compiler.
-
-\subsection{Object Selection}
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.8\columnwidth]{figures/object-group-photo-sm.jpg}
+\includegraphics[width=0.8\columnwidth]{figures/J48.png}
 \caption{
-The objects used for all experiments.
+The first four decisions in the J48 decision tree.
 }
-\label{fig:group-photo}
 \end{figure}
-
+\subsection{Object Selection}
 The objects chosen, Figure~\ref{fig:group-photo}, range in height from
 \unit[15]{cm} to \unit[45]{cm}, and breadth from \unit[8]{cm} to
 \unit[25]{cm}. These objects also display a variety of rotational
