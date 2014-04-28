@@ -88,10 +88,12 @@ machine learning, WEKA, and spam detection.
 The dataset in question was collected from the UCI Machine learning
 repository,which contains 5574 text messages, 425 ofwhich were spam,
 the rest of which are non-spam. This dataset was chosen because its
-spam to non-spam ratio of 7.6\% is approximates the 10.5\% SMS spam
-rate found in nature[6]. The data was collected from a website
-called grumbletext.com,where users post the text of spam messages that
-they have recieved, and was manually inspected and classified.
+spam to non-spam ratio of 7.6\% roughly approximates the SMS spam rate
+found in nature, since the spam rate in the UK is around 20\% [6],
+while the SMS spam rate inthe US is less than 1\%. The data was
+collected from a website called grumbletext.com,where users post the
+text of spam messages that they have recieved, and was manually
+inspected and classified.
 
 It should be noted that there is an inherent bias in the dataset,
 since the messages were collected from cellular users in the United
@@ -105,12 +107,11 @@ to train on messages from the intended location.
 \section{Preprocessing}
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\columnwidth]{figures/perception-pipeline.jpg}
-\caption{ The perception system is driven by registered depth and
-  color images paired with an estimate of the RGB-D sensor's pose in
-  the robot's coordinate frame. The dimensionality of the data
-  processed by each stage is indicated in the figure, illustrating
-  places where dimensionality reduction is used to improve efficiency.
+\includegraphics[width=0.9\columnwidth]{figures/spam_ham.png}
+\caption{ The SMS spam detectin system is trained on a dataset
+  containing 5,574 text messages, 425 of which are spam and the rest
+  non-spam. The messages were taken from a UK website where users post
+  spam messages. The messages were inspected and classified manually.
 }
 \label{fig:perception-pipeline}
 \end{figure}
@@ -179,190 +180,62 @@ an indicator for its class. To this end, we calculate the chi-squared
 metric for each of the 8,185 remaining features, and retained the
 ones that demonstrate class dependence, resulting in 1,835 attributes.
 
-\subsection{Coarse Recognition and Localization}
+\section{Classification}
 
+The remaining attributes were few enough to allow the employed
+learning methods to complete in a reasonable amount of time using
+10-fold cross validation. Although several of the following methods
+take large amounts of time to build despite the relatively small
+dataset, this results partially from WEKA being largely
+single-threaded. Actual implementations of these methods for industry
+usage would benefit greatly from exploiting the parallel structure of
+techniques such as Naive Bayes or J48.
 
-\subsection{Refined Recognition and Localization}
+\subsection{EM Clustering}
 
+The Expectation-Maximization algorithm (EM) proved to be the slowest,
+yet most efficient algorithm. The EM clustering techniques operates by
+fitting hyperellipsoids to the dataset.  It iterates over two stages
+-- the expectation and maximization steps -- and modifies the
+parameters of the hyperellipsoids until it converges to a
+solution. During the expectation step, the algorithm creates an
+indicator for how well the dataset complies with the model. In the
+maximization step, it determines which slight modifications to the
+model parameters would maximize the fit, and applies them.
 
-\subsection{Tracking}
-The above process is applied to a small number of observed point
-clusters, while the rest are left as unidentified. All clusters are
-then passed to a tracking component that models the kinematics of both
-identified and unidentified point clouds. Observation integration is
-achieved by maintaining a track state that includes both object
-position and velocity in a Kalman filtering framework.
+The preprocessing required to train EM was minimal. In order to ensure
+that the EM is agnostic to an instance's class during the clustering,
+the class labels were stripped from the instances prior to training,
+but no further modifications were required.
 
-Inspired by the linear arrangement of objects on a long table when
-viewed from off-axis, observations are aligned with existing estimates
-using the Needleman-Wunsch optimal matching algorithm
-\cite{NeedlemanWunsch1970}. This algorithm provides a principled way
-to match predictions of a linear chain of states to observations while
-taking potential object identification as well as position into
-account. This mechanism supports the presence of multiple objects
-within a single view by matching observations to existing tracks, or
-determining that an observation necessitates the initialization of a
-new track.
-
-% In the usual application of this algorithm to string
-% alignment, \textit{skip} characters may be added at any point in one
-% or the other strings. These are points at which two strings do not
-% align, but whose removal from one string allows a likely match to
-% continue beyond the missed location. The algorithm thus prevents us
-% from aligning a track identified as one object with an observation
-% identified as a different object type, and provides the necessary
-% mechanism to inject new tracks and deal with data dropout.
-
-The motion model used for tracking is one of zero
-acceleration. Furthermore, we are interested in the problem of
-tracking objects undergoing identical motion. We take advantage of
-this commonality by initializing the position covariance estimate of a
-new track by a sensor noise model as is usual, but carry over both
-velocity value and covariance from previous tracks. This causes the
-velocity estimate of successive tracks to adhere very tightly to a
-robust running average.
-
-Final reporting from the tracker is governed by a configuration
-parameter indicating how many observations of any given track are
-needed before reporting is warranted. When a recognized object track
-is reported, an estimate of its position on the table plane is
-extracted from the Kalman filter, and a bounded history of orientation
-estimates provided by the localization optimization is passed through
-a RANSAC \cite{Fischler1981:RANSAC} procedure to compute a robust
-mean. The special consideration given to object yaw is due to the
-expectation that yaw measurements will be the noisiest axis of
-observation due to varying geometry occlusion as the view of an object
-changes over time. Consider, for example, a round watering can with a
-long spout. The yaw estimate for such an object will likely be much
-better when computed from views in which the spout is visible than
-those where it can not be seen.
-
-% If the spout is not visible from some views, the yaw estimate
-% is likely to be much less accurate than that estimated from views that
-% capture at least part of the spout geometry.
-
-% \item Object clustering: When looking down on objects with overhanging
-%   geometry, we found that connected depth components weren't the best
-%   model for the point clouds associated with each object. Histogram
-%   objects along the table's long axis.
-
-\section{Manipulation}
-
-When an object is detected, the pick-and-place manipulation pipeline
-gets called to pick up the approaching object and move it to a desired
-location. The manipulation pipeline is comprised of three main
-components, namely grasping, motion planning and execution. Before the
-pipeline is called, an arm is chosen to pick up the object. Currently
-we are simply alternating between the arms. If no feasible grasps for
-the first arm are computed, we have found that quite often the other
-arm is capable of performing the pick-and-place action after receiving
-the next observation.
-
-Note, that the same system is used for manipulating both static and
-dynamic objects. In the case of the static object, the entire pipeline
-just executes immediately, instead of waiting for the object to enter
-the robot's workspace.
-
-\subsection{Grasping}
-
-Reliable grasping of a static object by a robot's end-effector can be
-a difficult task given the uncertainty in each part of the system,
-from the object pose estimation to the robot's mechanical
-calibration. Additional problems arise when the object is moving at a
-fast speed. To simplify grasp planning, we exploit the fact that we
-have a well-defined set of objects to be manipulated. This allows us
-to restrict the set of grasps for each type of object to ones that we
-have previously tested and saved in a database. Once an object is
-detected, the grasps are retrieved and checked for feasibility. We
-will now explain each component of the grasp selection process.
-
-\textit{\textbf{Types of Grasps.}}
-The process of picking up an object requires the end-effector to move between three different 6-DOF poses:
-\begin{itemize}
-\item \textit{pregrasp -} An end-effector pose that is offset from the object (see Figure~\ref{fig:recording_grasps-photo}, left). The motion planner is used to plan a collision free trajectory from the arm's waiting configuration to a valid configuration with the end-effector at the pregrasp pose.
-\item \textit{grasp -} The pose of the end-effector in which its fingers are in position to reliably enclose part of the object (see Figure~\ref{fig:recording_grasps-photo}, middle).
-\item \textit{postgrasp -} The end-effector pose after it moved away from the surface with the object grasped. The motion planner is then used to compute a feasible motion for the arm that takes the end-effector from the postgrasp to the desired place location.
-\end{itemize}
-
-\textit{\textbf{Recording Grasps.}}  Prior to manipulating a new
-object, we create a set of grasps for it. We found the grasp recording
-process to be simple and reliable. The process begins by placing the
-object within the workspace of either one of the arms and within the
-RGB-D sensor's view. Once the item is localized, the user is asked to
-move the end-effector to the desired pregrasp pose and the 6-DOF pose
-of the end-effector in the coordinate frame of the object is
-recorded. The process is repeated for the grasp pose, and the two
-grasps are then added to the grasp database for that object type. This
-pair of grasps defines a collision trajectory that brings the end
-effector into contact with the target object. The angle of this
-trajectory is chosen to improve the chances of a mechanically stable
-grip. In general, we found that a single set of postgrasp positions
-can be used for all object types so the user is not required to record
-a postgrasp for each object.  Instead, the grasp orientation is paired
-with a set of postgrasp translations above the object for each object
-type. In our experiments, the set of grasps for each object contains
-between two and twenty pregrasp-grasp pairs. See
-Figure~\ref{fig:recording_grasps-photo} for an example.
+EM clustering had an accuracy of 99.31\%, with only 42 instances
+misclassified. Although its ultimate accuracy is impressive, the time
+it took to build the model was by far the largest of any of the tested
+methods, taking over 2 hours to complete on a modern intel
+processor. EM clustering has a computational complexity of $O(n*k*d)$,
+where n is the number of instances, k is the number of clusters, and d
+is the number of attributes. Since EM scales linearly with the number
+of dimensions, it might seem strange that it had such a high
+runtime. This might result from two facters: firstly, EM might have a
+large constant, despite the linear scaling. Secondly, it is possible
+that this results from having too low a value of the final
+log-likelihood parameter which determines when the clustering algoritm
+terminates. Unfortunately, it was beyond the time constraints of this
+project to determine whether the default log-likelihood value was
+optimal.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.31\columnwidth]{figures/croc-record_pregrasp.jpg}
-\includegraphics[width=0.31\columnwidth]{figures/croc-record_grasp.jpg}
-\includegraphics[width=0.31\columnwidth]{figures/croc-grasps-outside_view.png}
-\caption{
-From left to right, the user moves the end-effector to the pregrasp pose and then to the grasp pose. The pair of grasps is added to the database as they appear on the right.
-}
-\label{fig:recording_grasps-photo}
+\includegraphics[width=0.93\columnwidth]{figures/EM.png}
+\caption{ The result of the EM clustering and classification from left
+  to right: the actual class of the instance, the number of instances
+  classified as spam, and the number of instances classified as
+  non-spam.  }
 \end{figure}
 
-\textit{\textbf{Grasp Selection.}}  Upon detection of a new object, we
-use its estimated pose and velocity to predict $t_{pred}$ and
-$x_{pred}$. $t_{pred}$ is the time at which the object will be at the
-center of the workspace of the arm and $x_{pred}$ is the predicted
-6-DOF object pose in the world. The object type is used to retrieve a
-set of pregrasps and grasps from the database. For each pregrasp,
-$p_i$, we use $x_{pred}$ to compute $x_{p_i}$, the pregrasp pose in
-the world frame for when the object will be at its predicted pose. The
-same is done for each grasp $g_i$ to compute $x_{g_i}$.
 
-Before we add $\{x_{p_i}, x_{g_i}\}$ to $X_{pg}$, the set of feasible
-pregrasp-grasp tuples, the following two feasibility checks are
-performed on each tuple:
-\begin{itemize}
-% \item \textit{chase grasps -} It is very difficult to pick up a moving
-%   object using a grasp motion that is \textit{chasing} it along the
-%   direction of its velocity, $v_{object}$.  It rarely succeeds if
-%   $v_{object}$ is equal to or greater than the maximum speed of the
-%   end-effector along the grasp motion. Thus, we chose to filter out
-%   the chase grasps completely by detecting if the pregrasp to grasp
-%   motion is moving in the same direction as $v_{object}$. We do this
-%   by computing $c = \|v_{object}\| \cdot \|x_{g_i}\|$. If $c <
-%   k^\circ$, the tuple is deemed too similar to the object's velocity
-%   and it is rejected. In our experiments, we set $k$ to correspond to
-%   an angular difference of $-30^\circ$.
-\item \textit{chase grasps -} It is very difficult to pick up a moving
-  object using a grasp motion that is \textit{chasing} it along the
-  direction of its velocity, $v_{object}$.  It rarely succeeds if
-  $v_{object}$ is equal to or greater than the maximum speed of the
-  end-effector along the grasp motion. Thus, we chose to filter out
-  the chase grasps completely by detecting if the pregrasp to grasp
-  motion is moving in the same direction as $v_{object}$. We do this
-  by computing $c = \frac{v_{object} \cdot (x_{p_i} -
-    x_{g_i})}{\|v_{object}\|\|x_{p_i} - x_{g_i}\|}$. If $c <
-  k^\circ$, the tuple is deemed too similar to the object's velocity
-  and it is rejected. In our experiments, we set $k$ to correspond to
-  an angular difference of $-30^\circ$.
+\section{K Nearest Neighbor}
 
- 
-\item \textit{kinematics -} We check if each $x_{p_i}$ and $x_{g_i}$
-  is kinematically feasible for the arm of the robot using an inverse
-  kinematics solver to compute the corresponding joint
-  configuration. If either is invalid, the tuple is rejected. In
-  Figure~\ref{fig:kinematics_feasibility_check}, six pregrasp-grasp
-  tuples are shown for the basket. After they are checked for
-  kinematic feasibility, the ones in red (darker color) are discarded
-  because they are unreachable by the right arm.
-\end{itemize}
 
 \begin{figure}[t]
 \centering
