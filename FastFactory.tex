@@ -74,49 +74,26 @@ at al. were able to achieve an email spam misclassification rate of
 only 1.17\% [3], which is a daunting task for SMS spam detection.
 
 The differences between SMS and email spam detection warrant a
-reevaluation of the effectiveness of current learning models. Fortunately, the University of Waikato has provided WEKA: a toolkit that conveniently provides implementations of many well known and vetted classification, association, and clustering techniques. The algorithms included in WEKA and tested in this paper are by no means an exhaustive analysis of the spam detetion literature, yet this paper should function well as an introduction for those who are new to machine learning, WEKA, and spam detection.
+reevaluation of the effectiveness of current learning
+models. Fortunately, the University of Waikato has provided WEKA: a
+toolkit that conveniently provides implementations of many well known
+and vetted classification, association, and clustering techniques. The
+algorithms included in WEKA and tested in this paper are by no means
+an exhaustive analysis of the spam detetion literature, yet this paper
+should function well as an introduction for those who are new to
+machine learning, WEKA, and spam detection.
 
-\section{Related Work}
-Factory automation typically relies on careful environment control and
-predictable inputs. Industrial perception has historically relied on
-2D visual sensing where vision sensing is required
-\cite{NIST2012:BinPicking}. This state of affairs is changing as
-general purpose robots lead the shift to less structured environments,
-a greater variety of behaviors, and full 3D perception and planning.
+\section{Dataset}
+The dataset in question was collected from the UCI Machine learning
+repository,which contains 5574 text messages, 425 ofwhich were spam,
+the rest of which are non-spam. This dataset was chosen because its
+spam to non-spam ratio of 7.6\% is approximates the 10.5\% SMS spam
+rate found in nature[6]. The data was collected from a website
+called Grumbletext,where users post the text of spam messages that
+they have recieved, and was manually inspected and classified.
 
-Recent approaches to perception for manipulation has moved beyond
-standard 2D image processing by applying a variety of new sensing
-modalities to the problem. A multi-flash camera sensor has been used
-to observe depth edges of parts piled in a bin
-\cite{Liu2012:BinPicking}. This work focused on fine manipulation in a
-highly cluttered environment, and was able to achieve a 94\% success
-rate with just under one second spent on object pose
-estimation. Object recognition and pose estimation in complex, noisy
-scenes is also demonstrated in \cite{Papazov2012:Grasping} by relying
-on an RGB-D sensor.
 
-An example of a responsive general purpose robotic platform
-interacting with moving objects may be found in
-\cite{Birbach2011:Catch}, in which a mobile humanoid robot is given
-the ability to catch balls tossed toward it. This application requires
-great care and attention be given to processing time, as being late is
-not an option. In this case, the software performs real-time circle
-detection at \unit[35]{ms} per image.
-
-The aforementioned PR2 has been used extensively in tabletop
-manipulation research \cite{WGObjectManipulation}. This work focused
-on reliability and modularity, and has been demonstrated to enable the
-PR2 to pick up a variety of objects, including those previously
-unknown to the software.
-
-Raw performance of perception for manipulator planning was a primary
-consideration in \cite{Wagner2013:GPUMotionPlanning}, in which a
-signed truncated distance field computed from Kinect data on a
-high-end GPU is used to drive manipulator planning. The result is the
-ability of a manipulation system to execute a planned, collision free
-path three seconds after first exposure to the scene.
-
-\section{Perception}
+\section{Preprocessing}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\columnwidth]{figures/perception-pipeline.jpg}
@@ -129,134 +106,61 @@ path three seconds after first exposure to the scene.
 \label{fig:perception-pipeline}
 \end{figure}
 
-The perception system employed here is made up of a staged processing
-pipeline based on RGB-D sensor data, and the PR2's own pose
-estimation, Figure~\ref{fig:perception-pipeline}. The system is given
-information about objects of interest at startup, then takes its input
-from ROS, and publishes localized, identified objects as they are
-detected. The overall procedure is that table geometry is extracted to
-perform an initial interpretation of the scene that disregards a large
-fraction of sensor data. Detected points that lie above the work
-surface are clustered, and those clusters are recognized and localized
-to provide a pose estimation of identifiable objects. The individual
-components of the perception pipeline are described in detail below.
+\subsection{Token and Frequency Extraction}
 
-\subsection{Conventions}
-The robot coordinate frame is used to identify features of the system
-and the environment in the following discussion. The convention
-followed is that common to ROS: a right-handed coordinate system with
-the X axis extending forward from the robot, the Y axis extending to
-the robot's left, and the Z axis extending up from the base. Objects
-may be positioned anywhere on the table surface, and are free to
-rotate about their vertical axes.
+The data was provided as raw text, where each line corresponded to a
+class label and a space, followed by the text of the SMS message. The
+end goal of the preprocessing stage is to transform the data into a
+.arff format, where each unique word corresponds to a nominal feature
+that is either a 1, if present in the text message, or a 0 if it was
+not present. As such, it was necessary to take to union of each SMS
+message's words across all messages in the dataset. This was
+accomplished using the std::map class included in the standard
+template library of c++.  The initial preprocessing, resulted in
+18,152 unique words.  
 
-\subsection{Work Surface Extraction}
-\label{sec:table-detection}
-During execution, the table height, direction, and extents are
-periodically re-estimated from direct observation. This process is run
-every ten seconds to allow for robot movement during operation without
-requiring a reset of the system. In this stage, we search for a
-connected component of the depth image that is dominated by points
-within a narrow range of heights above ground level using a recursive
-histogram analysis.
+Upon examination, it was discovered that many of the words contained
+special characters that falsely inflated the number of unique words;
+for example, in addition to having an entry for the string ``apple'',
+there would also be an entry for the string: ``apple.'', ``apple!'',
+and ``apple?''. Thus, it was necessary to remove all special
+characters that might cause confusion within a unique feature, so any
+character within the following
+string \begin{verbatim}!@#\%^&*()<>.,\end{verbatim} was replaced with
+a space (subequently, all spurious spaces are removed). After this
+preprocessing stage, only 8,243 unique strings remained.
 
-The inliers of a successful analysis -- consisting of a significant
-fraction of points within \unit[2]{cm} of each other when projected
-onto the Z axis -- are then used to extract the table orientation and
-extents which are used in subsequent object extraction. Assuming
-asymmetric geometry, the table orientation is calculated as the
-eigenvector corresponding to the largest magnitude eigenvalue of the
-covariance matrix of the inlier points projected onto the XY
-plane. When a new table estimate is computed, it is atomically swapped
-into a memory cell referenced at the start of each new object
-detection update.
+Many of the words that remained were ones such as ``the'' or ``a''
+that were ubiquitous across both spam and non-spam messages. Rather
+than have high frequency yet low information features, the strings
+that were used more that 500 or less than 5 times were simply deleted
+from the feature space. In addition, the top 50 most frequent words
+were alse deleted, finally resulting in 2,591 unique strings. 
+
+\subsection{Chi-squared selection}
+
+Unfortunately, having several thousands of attributes is prohibitively
+expensive for learning techniques that don't scale well with
+dimensionality. Our attempts to run the J48 decision-tree learning on
+insatances 2,591 attributes took several days, and eventually resulted
+in an overflow of the JVM's heap space. Therefore, it was necessary to
+further reduce the dimensionality to even begin to obtain data.
+
+The chi-squared independence test provided 
+
+As the messages were iterated over, their relative
+spam and non-spam frequencies were recoreded.
+
+
+
+
+
 
 \subsection{Coarse Recognition and Localization}
-Upon arrival of a pair of registered depth and color images, all
-points not within a space above the table geometry previously
-extracted are immediately removed. The remaining points are projected
-onto the line corresponding to the table direction, and clustered
-using a histogram analysis. These clusters are then run through
-multiple coarse classifiers that use color statistics and size limits
-to reject obvious object type mismatches. For instance, if a cluster
-has a vertical extent of only \unit[10]{cm}, it will not be identified
-as an object expected to be \unit[30]{cm} tall.
 
-Multiple coarse recognizers corresponding to the known object
-vocabulary may support any given cluster. All clusters recognized by
-at least one coarse recognizer have their centroids computed, and are
-fed forward in the system. When no coarse recognizer fires, this
-processing stage provides an opportunity for early exit.
 
 \subsection{Refined Recognition and Localization}
-The objects to be recognized and localized must be modeled before the
-system will identify them as anything other than unknown obstacles. A
-point cloud of an object's surface is first captured, then used to
-construct a truncated distance field representing a uniform sampling
-of a cost function whose minimal manifold corresponds to the surface
-of the object model. This sampling is computed by performing a
-Euclidean distance transform (EDT) on a voxel grid populated from the
-model point cloud. This preprocessing step is efficiently performed
-across multiple CPU cores using the approach described in
-\cite{Meijster2002}.
 
-Observed point clusters are recognized by finding a 2D transformation
-that minimizes this cost function when summed over all observed
-points. This approach is similar to \cite{Papazov2011:Stochastic}, but
-the nonlinear optimization technique employed here is Powell's dogleg
-method \cite{Powell1964}. The optimization procedure iteratively
-evaluates 2D transformations applied to 3D points whose transformed
-coordinates are used to index into the sampled cost function until a
-local minimum is found.
-
-% The optimization procedure is an iterative
-% evaluation of parameters that converges to a local minimum. In
-% concrete terms, what is involved is the transformation of 3D points on
-% a 2D surface, which are then used to index into the sampled cost
-% function given by the distance field associated with an object model.
-
-The necessary arithmetic and memory access patterns for this operation
-lie squarely within the core competencies of hardware designed for
-graphics acceleration. By loading the sampled cost function into a 3D
-texture in OpenGL, the cost of each transformed point is obtained by
-looking up a floating point value in a texture. The graphics
-processing unit (GPU) is used to perform linear interpolation along
-each axis of this texture lookup to further smooth the search space,
-and texture coordinates are clamped to truncate the cost function out
-to infinity, thereby mitigating the deleterious effects of outliers.
-
-First, the image coordinates of the relevant points are translated to
-a cropped coordinate frame containing only the observed points. These
-coordinates are then paired with the 3D points reconstructed from the
-depth data, transformed into the object's coordinate frame using the
-points' centroid as the origin, and loaded onto the GPU. The 2D
-projection of the original data is used to address the output data as
-it is, by construction, an injective mapping from 3D points to 2D
-coordinates.
-
-A GLSL vertex shader applies the candidate transformation, while
-passing through the 2D coordinates for each point unchanged. The
-fragment shader looks up the distance value from the cost function
-texture, and writes the interpolated value it arrives at to that
-point's location in the cropped 2D coordinate frame. Additionally, the
-optimization procedure lends itself to a batch interface, wherein
-several choices of parameters are evaluated in an overlapping fashion,
-thereby allowing the GPU to compute cost function evaluations while
-asynchronously transferring the results of previous evaluations back
-to the CPU.
-
-When the optimization process has finished, the average distance from
-each point in the observation under the minimal-cost transformation to
-the object model is considered to determine if we have a successful
-identification. Multiple optimizations may be performed to resolve the
-ambiguity of multiple coarse recognizers positively identifying point
-cluster summaries. An additional gain in efficiency is found by
-considering the rotational symmetry of each object. The general
-problem of identifying a 2D translation and 1D rotation is, for
-example, reduced to just the 2D translation optimization for objects
-that are fully symmetric. The rotational symmetry of each object is
-therefore recorded along with the object model information used by the
-coarse recognition step.
 
 \subsection{Tracking}
 The above process is applied to a small number of observed point
