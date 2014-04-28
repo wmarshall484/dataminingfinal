@@ -1,0 +1,38 @@
+Reviewer 1 of IROS 2013 submission 2425
+
+Comments to the author
+======================
+
+This paper presents a technological solution to the problem
+of pick and place of (known) dynamic objects. The paper
+details both the perception and the planning. Although it
+is not a theoretic paper, it can be of interest for the
+iros audience.
+
+Some improvements can be incorporated:
+
+-	The results obtained (pick and place each 6.7s with
+obstacles moving at 33cm/s) say nothing by themselves. 
+Some comments on the requirements need to be included, i.e.
+if the robot is expected to work with humans, which is the
+desired performance?   Comparison with other  similar
+approaches is needed  (e.g. although industrial automation
+applications are more structured, the knowledge of their
+current performance is interesting ).
+
+-	In the motion planning, the cost function used aims
+to minimize the end-effector path length.  An explanation
+is needed on how does this relate to requirements (stated
+at the beginning of the section) for the robot to work
+together with human workers (what does ”optimal” mean at
+the end of page?). 
+
+-	The analysis section should be more structured, the
+important points should be more clearly highlighted and
+some tables summarizing the results should be included to
+facilitate the evaluation. 
+
+
+Comments on the Video Attachment
+================================
+

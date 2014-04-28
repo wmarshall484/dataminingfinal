@@ -1,0 +1,49 @@
+Reviewer 2 of IROS 2013 submission 2425
+
+Comments to the author
+======================
+
+The central contribution of this paper is the pragmatic
+construction of a setup for fast and robust picking
+operations from a moving conveyor belt.  Beyond meeting the
+speed requirements, no particular contributions are
+claimed.  The Related Work section just lists some examples
+of related work, without putting this paper into
+perspective.  Most of the processing pipeline is composed
+of standard components, and the end result is that the
+overall performance bottleneck is the speeds at which the
+PR2's arms can be operated.  No attempt was reported to
+test the limits of conveyor-belt speed, e.g. by plotting
+success rate vs. belt speed.
+
+Perhaps the most interesting contribution of this paper is
+that it constitutes a compendium of well-chosen methods and
+how to put them together to form a fast and robust
+perceptual pipeline and motion planner.
+
+Some questions:
+
+- Why do pregrasps have to be recorded separately? Can't
+they be computed from the final grasp locations?
+
+- In the description of planning for an entire pregrasp
+set, the crucial sentence is missing its predicate ("After
+a plan is computed... chosen by the planner"), making the
+entire description unclear.  Does the ARA* planner look for
+the best path to *any* pregrasp, which then determines the
+corresponding grasp?  What is the role of the final
+waypoint?
+
+- What happens if collisions are detected in a smoothed
+path?  Will/can the entire plan be recomputed?
+
+- Here my most important question: Instead of having the
+moving object slam into the hand (and/or vice versa), would
+it not be much more robust to target the hand towards the
+*moving* object, matching its estimated velocity?  This
+should not be too hard to do.
+
+
+Comments on the Video Attachment
+================================
+

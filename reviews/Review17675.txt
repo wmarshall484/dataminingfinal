@@ -1,0 +1,109 @@
+Reviewer 8 of IROS 2013 submission 2425
+
+Comments to the author
+======================
+
+The authors present a PR2 system capable of grasping
+objects moving on a conveyer belt. They mainly describe the
+integration of the system from various state-of-the-art
+modules. In their presentation, they do not provide very
+much detail about individual processing stages and they do
+not pose or answer new research questions. Especially, they
+more or less ignore the important timing problem during
+grasping of moving objects. 
+The paper lacks an evaluation of the prediction accuracy of
+the moving object (x_pred, t_pred) and it was not described
+how the predicted execution timing of grasp trajectories
+was evaluated. The obtained difference of 80ms is way to
+large to successfully grasp fast objects. Consequently, the
+paper lacks a discussion, how the approach scales to these
+situations. 
+However, the paper describes an intersting and new
+application for service robots, which nicely illustrates
+the current state-of-the-art. Otherwise, the paper is
+clearly written.
+
+
+These are the major questions left open:
+In III-B the authors talk about the extraction of the table
+orientation. This wording is ambiguious and should be
+clarified: Does it refer to the table normal or to the
+elongated horizontal axis of the table? Assuming the
+latter, you should clarify, that a) you assume the table
+normal to be aligned with z-axis, b) you assume an
+elongated table/conveyer belt, whose elongated axis is
+extracted as described.
+
+Extracting the table points is done by looking for "a
+connected component of the depth image that is dominated by
+points within a narrow range of heights above ground". How
+do you distinguish between floor and table? What about
+other flat objects standing around? Please clarify your
+implicit assumptions.
+
+In sec III-C, it doesn't become clear, that you try to
+classify the extracted clusters as known objects. I've got
+the impression, that you only try to filter noise from
+possible objects. However, it seems to go further into
+coarse classification. 
+To improve this text, I suggest to change the phrase "These
+clusters are then run through a quick summarization
+procedure to determine if they could possibly be an object
+of interest." to
+"These clusters are fed to multiple coarse classifiers to
+determine, if they could be a known object of interest.
+These classifiers evaluate the statistics of HSV colors of
+the pixels corresponding to cluster points and the overall
+spatial extents of a cluster. 
+
+III-E: The matching with Needleman-Wunsch algorithm is not
+detailed out: How do you match two instances of point
+clouds? In the original algorithm equality can be easily
+tested, but here you need to measure the grade of
+similarity, don't you?
+Also, it doesn't become clear, where the linear sequence of
+items comes from? Is it simply the *temporal* sequence of
+observations / estimates? (Probably, the confusion stems
+from the first sentence: "inspired by the linear
+arrangement of objects". Maybe, replace this by linear
+motion.
+Finally, it's not clear, who the alignment of estimates and
+observations with Needleman-Wunsch is exploited in the
+Kalman-Filter-based tracking. Please clarify!
+The video suggests, that there is a single object on the
+table only. Please discuss, how/why your approach scales
+with multiple objects on the table? 
+
+Which special consideration you take for object yaw? You
+only report the fact, but not the details!
+
+
+Grasp Selection, chase grasps: To compare the grasping
+motion direction to the object motion direction, you
+probably compute the scalar product of both, instead of
+multiplying their magnitudes?!? 
+
+Postgrasp: Why don't you simply lift off (along z-axis) the
+object?
+
+Path Planning: From the videos, there is no urgent need for
+path planning, i.e. the straight-line motion is always
+feasible. You should place some obstacles in the
+experiments to underline the planning capabilities.
+You mention to use A^* for planning. However, this requires
+a graph to be planned on. How does this graph look like,
+where does it come from?
+
+In order to hold an object upright, you need to control two
+rotational degrees of freedom only, not all three. Leaving
+yaw alone, you can exploit the additional DoF for planning.
+
+Why is the timing accuracy (80ms) so bad? That wouldn't
+suffice to catch a ball, like done at DLR. How did you
+measured the timing accuracy??? How does the algorithm
+scale to faster belt speeds?
+
+
+Comments on the Video Attachment
+================================
+

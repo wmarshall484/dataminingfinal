@@ -1,0 +1,12 @@
+The paper provides a technological solution for fast and
+robust picking of known dynamic objects from a moving
+conveyor belt. Although no particular theoretical
+contributions are claimed, suitable state-of-the-art
+methods for perception and planning have been carefully
+selected and integrated to comply with the requirements of
+the task.
+
+----------------------------------------
+Comments on Video Attachment:
+
+Good
