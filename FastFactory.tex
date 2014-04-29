@@ -385,9 +385,26 @@ selects such features.
 
 \section{Conclusion and future work}
 
-Although Naive Bayes performed better than any of the other methods tested, it still
- 
+A cross examination of different machine learning techniques applied
+to the problem of SMS spam filtering yielded the result that Naive
+Bayes is an optimal choice for applications that require fast yet
+efficient algorithms. The J48, EM clustering, and KNN methods were
+also analyzed, and it was found that they compromise runtime
+performance for accuracy, or vice-versa. 
 
+Although Naive Bayes performed better than any of the other methods
+tested, it still has two main faults. Firstly, it assumes that the
+class attributes are independent from one another, which is
+untrue. Secondly, it does not take into account word ordering; the
+phrase ``buy now!'' is as good an indicator for spam as ``Now, don't
+buy anything''. Future implementations would take this into account.
+
+Lastly, this method of spam detection suffers from the curse of
+dimensionality. Ideally, one should have at least ten times as many
+training instances as there are attributes. Having instances with over
+1,800 attributes warrants the acquisition of a much larger dataset.
+
+\subsection{Object Selection}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.8\columnwidth]{figures/J48.png}
@@ -395,29 +412,10 @@ Although Naive Bayes performed better than any of the other methods tested, it s
 The first four decisions in the J48 decision tree.
 }
 \end{figure}
-\subsection{Object Selection}
-The objects chosen, Figure~\ref{fig:group-photo}, range in height from
-\unit[15]{cm} to \unit[45]{cm}, and breadth from \unit[8]{cm} to
-\unit[25]{cm}. These objects also display a variety of rotational
-symmetries, which affects their localization and how the objects may
-be grasped. The candlesticks and tall green bottle have an infinite
-order of rotational symmetry, denoted $C_\infty$, which translates to
-a freedom to grasp such an object from any angle, and frees the
-localization optimization from needing to consider object
-orientation. The shoe is not rotationally symmetric, denoted $C_1$,
-and must be grasped from its open end. The spritzer bottle is also
-$C_1$, but may be grasped from either side to hook the PR2's fingers
-underneath the overhanging geometry of the trigger mechanism. The
-various baskets are all $C_2$, as their handles may be grasped from
-either side.
+ 
 
-Object models were acquired using RoboEarth software
-\cite{DiMarco2012:RoboEarthModel}, a poster with fiducial markers, and
-a Kinect sensor. The models gathered for the experiments described
-here consist of 500 thousand to 1 million points.
-
-\subsection{Pick-and-Place}
-Figure~\ref{fig:group-photo} shows the conveyor belt used for testing
+\subsection{Pick-and-Place} 
+ shows the conveyor belt used for testing
 both static grasps, in which objects are placed on the surface in
 front of the PR2 with the belt motor turned off, and dynamic grasps,
 in which the belt motor is on. In the static grasp configuration, the
@@ -444,7 +442,7 @@ failure recovery.
 
 The dynamic configuration shown in the video associated with this
 paper has the robot looking down the length of the conveyor belt, as
-in Figure~\ref{fig:group-photo}. Objects are placed on the far end of
+in Figure. Objects are placed on the far end of
 the \unit[2.13]{m} belt, and carried past the robot. In this
 configuration, the perception system only reports on objects it has
 seen a minimum of three times. This limits system responsiveness, but
@@ -487,10 +485,10 @@ Transform (EDT), taking an average of \unit[304]{ms} for each object.
 % }
 % \label{fig:table-density}
 % \end{figure}
-
+ 
 Once the system is running, parameters describing the conveyor belt
 surface are periodically recalculated as described in
-Section~\ref{sec:table-detection}. This process took an average of
+Section. This process took an average of
 \unit[39]{ms} per update, and was run concurrently with the rest of
 the perception pipeline in a separate thread.
 
